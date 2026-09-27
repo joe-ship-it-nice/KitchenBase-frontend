@@ -331,7 +331,7 @@ function App() {
           <h1>
             JOE-M MASAK.
             <br />
-            <span>Joe-ngan merajoe-k, masak joer!</span>
+            <span>Joe-ngan merajoe-k, makan joer!</span>
           </h1>
 
           <p>
