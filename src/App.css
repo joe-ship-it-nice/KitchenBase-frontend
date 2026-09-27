@@ -1,1 +1,438 @@
+/* BASE */
+* {
+    box-sizing: border-box;
+}
 
+html {
+    scroll-behavior: smooth;
+    color-scheme: dark;
+}
+
+body {
+    margin: 0;
+    min-width: 320px;
+    display: block;
+    background: #091710;
+    color: #f5faf6;
+    font-family: "Segoe UI", Arial, sans-serif;
+    font-size: 16px;
+    line-height: 1.65;
+}
+
+#root {
+    width: 100%;
+    max-width: none;
+    margin: 0;
+    padding: 0;
+    text-align: left;
+}
+
+.kitchen-app {
+    width: min(1180px, calc(100% - 48px));
+    margin: 0 auto;
+    padding: 0;
+}
+
+a {
+    color: inherit;
+    text-decoration: none;
+}
+
+button,
+input,
+textarea,
+select {
+    font: inherit;
+}
+
+::selection {
+    background: #b5edc5;
+    color: #091710;
+}
+
+/* NAVIGATION */
+.topbar {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 16px;
+    min-height: 90px;
+    border-bottom: 1px solid #355b43;
+}
+
+.brand {
+    font-size: 18px;
+    font-weight: 800;
+    letter-spacing: 2px;
+}
+
+.brand span {
+    color: #b5edc5;
+}
+
+.nav-link {
+    padding: 9px 18px;
+    border: 1px solid #355b43;
+    border-radius: 8px;
+    font-size: 14px;
+}
+
+.nav-link:hover {
+    border-color: #b5edc5;
+    color: #b5edc5;
+}
+
+/* HERO */
+.orbit-core img {
+    width: 75%;
+    height: 75%;
+    object-fit: contain;
+}
+
+.hero {
+    position: relative;
+    display: grid;
+    grid-template-columns: 1.5fr 1fr;
+    align-items: center;
+    gap: 36px;
+    overflow: hidden;
+    margin: 30px 0 56px;
+    padding: 64px 44px;
+    border: 1px solid #355b43;
+    border-radius: 24px;
+    background:
+        radial-gradient(ellipse at 90% 40%,
+            rgba(115, 200, 140, 0.13),
+            transparent 55%),
+        #10261b;
+}
+
+.eyebrow {
+    color: #b5edc5;
+    font-size: 11px;
+    font-weight: 700;
+    letter-spacing: 2px;
+}
+
+.hero h1 {
+    margin: 22px 0;
+    font-size: clamp(36px, 4.8vw, 64px);
+    font-weight: 800;
+    line-height: 1.08;
+    letter-spacing: -2px;
+}
+
+.hero h1 span {
+    color: #b5edc5;
+}
+
+.hero p {
+    max-width: 460px;
+    margin-bottom: 30px;
+    color: #b7cbbb;
+}
+
+.hero-button {
+    display: inline-flex;
+    align-items: center;
+    min-height: 48px;
+    padding: 12px 22px;
+    border-radius: 8px;
+    background: #b5edc5;
+    color: #102619;
+    font-weight: 700;
+}
+
+.hero-button:hover {
+    background: #d5f8df;
+}
+
+/* DECORATIVE ORBIT */
+.hero-orbit {
+    position: relative;
+    display: grid;
+    place-items: center;
+    width: min(100%, 290px);
+    aspect-ratio: 1;
+    justify-self: center;
+    border: 1px solid #507b5d;
+    border-radius: 50%;
+    background: radial-gradient(circle,
+            rgba(150, 230, 170, 0.12),
+            transparent 68%);
+}
+
+.hero-orbit::before,
+.hero-orbit::after {
+    content: "";
+    position: absolute;
+    border: 1px solid #608d6d;
+    border-radius: 50%;
+}
+
+.hero-orbit::before {
+    inset: 22px;
+    transform: rotate(-35deg) scaleX(0.65);
+}
+
+.hero-orbit::after {
+    inset: -15px 45px;
+    transform: rotate(40deg);
+}
+
+.orbit-core {
+    display: grid;
+    place-items: center;
+    width: 105px;
+    height: 105px;
+    border: 1px solid #b5edc5;
+    border-radius: 24px;
+    background: #245b3e;
+    color: #d5f8df;
+    font-size: 38px;
+    font-weight: 800;
+    box-shadow: 0 0 60px rgba(150, 230, 170, 0.15);
+}
+
+.orbit-caption {
+    position: absolute;
+    bottom: 25px;
+    color: #b7cbbb;
+    font-size: 9px;
+    letter-spacing: 2px;
+}
+
+/* SECTIONS */
+.kitchen-app section {
+    min-width: 0;
+    margin-bottom: 30px;
+    padding: 30px;
+    border: 1px solid #355b43;
+    border-radius: 18px;
+    background: #10261b;
+}
+
+.kitchen-app h2 {
+    margin: 0 0 26px;
+    color: #f5faf6;
+    font-size: 26px;
+    line-height: 1.25;
+    letter-spacing: -0.5px;
+}
+
+.kitchen-app .recipes-section {
+    padding: 0;
+    border: 0;
+    background: transparent;
+}
+
+#recipes,
+#add-recipe {
+    scroll-margin-top: 24px;
+}
+
+.category-name {
+    display: inline-block;
+    text-transform: capitalize;
+}
+
+/* RECIPE GRID */
+.recipe-grid {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 22px;
+    margin-bottom: 42px;
+}
+
+.kitchen-app .card-spotlight.recipe-card {
+    min-width: 0;
+    padding: 28px;
+    border: 1px solid #355b43;
+    border-radius: 16px;
+    background: #143021;
+    color: #f5faf6;
+    transition: border-color 0.2s ease, transform 0.2s ease;
+}
+
+.recipe-card:hover {
+    transform: translateY(-4px);
+    border-color: #b5edc5;
+}
+
+.recipe-label {
+    color: #b5edc5;
+    font-size: 10px;
+    font-weight: 700;
+    letter-spacing: 2px;
+}
+
+.recipe-card h3 {
+    margin: 14px 0 24px;
+    color: #ffffff;
+    font-size: 26px;
+    line-height: 1.2;
+}
+
+.recipe-card h4 {
+    margin: 20px 0 7px;
+    color: #d6e9da;
+    font-size: 11px;
+    text-transform: uppercase;
+    letter-spacing: 1.5px;
+}
+
+.recipe-card p {
+    margin: 0;
+    color: #b7cbbb;
+    font-size: 15px;
+    white-space: pre-wrap;
+    overflow-wrap: anywhere;
+}
+
+.recipe-card small {
+    display: block;
+    margin-top: 26px;
+    padding-top: 16px;
+    border-top: 1px solid #355b43;
+    color: #b5edc5;
+    font-size: 12px;
+}
+
+/* FORMS */
+.kitchen-app form {
+    display: grid;
+    gap: 16px;
+}
+
+.kitchen-app input,
+.kitchen-app textarea,
+.kitchen-app select {
+    width: 100%;
+    min-width: 0;
+    padding: 14px 16px;
+    border: 1px solid #355b43;
+    border-radius: 9px;
+    background: #0b1d13;
+    color: #f5faf6;
+}
+
+.kitchen-app textarea {
+    min-height: 120px;
+    resize: vertical;
+}
+
+.kitchen-app input::placeholder,
+.kitchen-app textarea::placeholder {
+    color: #a2bba9;
+}
+
+.kitchen-app input:focus,
+.kitchen-app textarea:focus,
+.kitchen-app select:focus {
+    outline: 2px solid #b5edc5;
+    outline-offset: 2px;
+    border-color: #b5edc5;
+}
+
+.kitchen-app button {
+    justify-self: start;
+    padding: 12px 24px;
+    border: 1px solid transparent;
+    border-radius: 9px;
+    background: #b5edc5;
+    color: #102619;
+    font-weight: 700;
+    cursor: pointer;
+}
+
+.kitchen-app button:hover {
+    background: #d5f8df;
+}
+
+.kitchen-app button:disabled {
+    opacity: 0.6;
+    cursor: wait;
+}
+
+.kitchen-app a:focus-visible,
+.kitchen-app button:focus-visible {
+    outline: 2px solid #b5edc5;
+    outline-offset: 5px;
+}
+
+/* COMMUNITY */
+.community-grid {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 24px;
+}
+
+.community-grid section>p {
+    padding: 12px 0;
+    border-bottom: 1px solid #355b43;
+    color: #b7cbbb;
+    overflow-wrap: anywhere;
+}
+
+.kitchen-app footer {
+    display: flex;
+    justify-content: space-between;
+    gap: 20px;
+    padding: 28px 0 36px;
+    border-top: 1px solid #355b43;
+    color: #b7cbbb;
+    font-size: 12px;
+}
+
+.kitchen-app footer span:first-child {
+    color: #b5edc5;
+    font-weight: 700;
+    letter-spacing: 2px;
+}
+
+/* MOBILE */
+@media (max-width: 760px) {
+    .kitchen-app {
+        width: calc(100% - 32px);
+    }
+
+    .hero {
+        grid-template-columns: 1fr;
+        padding: 38px 24px;
+    }
+
+    .hero-orbit {
+        width: 190px;
+        margin: 16px auto;
+    }
+
+    .recipe-grid,
+    .community-grid {
+        grid-template-columns: 1fr;
+    }
+
+    .kitchen-app section,
+    .kitchen-app .card-spotlight.recipe-card {
+        padding: 22px;
+    }
+
+    .kitchen-app .recipes-section {
+        padding: 0;
+    }
+
+    .kitchen-app footer {
+        flex-direction: column;
+        gap: 8px;
+    }
+}
+
+@media (prefers-reduced-motion: reduce) {
+    html {
+        scroll-behavior: auto;
+    }
+
+    .kitchen-app .recipe-card {
+        transition: none;
+        transform: none;
+    }
+}
