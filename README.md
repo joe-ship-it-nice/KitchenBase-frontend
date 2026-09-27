@@ -1,6 +1,6 @@
 # JOE-M MASAK 🍳
 
-Joe-ngan merajoe-k, masak joer!
+Joe-ngan merajoe-k, makan joer!
 
 
 ## Live Links
