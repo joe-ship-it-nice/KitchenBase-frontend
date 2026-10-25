@@ -1,53 +1,86 @@
 import { useEffect, useState } from "react";
+import { supabase } from "./supabaseClient";
 import SpotlightCard from "./components/SpotlightCard";
 import "./App.css";
 
-// My API endpoints
-const API = {
-  recipes: "https://kitchenbase-backend-production.up.railway.app/recipes",
-  recipeById: "https://kitchenbase-backend-production.up.railway.app/recipes/1",
-  createRecipe: "https://kitchenbase-backend-production.up.railway.app/recipes",
-  users: "https://kitchenbase-backend-production.up.railway.app/users",
-  createUser: "https://kitchenbase-backend-production.up.railway.app/users",
-  categories: "https://kitchenbase-backend-production.up.railway.app/categories",
-};
+// Load data directly from Supabase.
+async function getRecipes() {
+  const { data, error } = await supabase
+    .from("recipe")
+    .select("id, name, ingredients, instructions, author, category");
 
-function Recipes() {
+  if (error) throw error;
+  return data;
+}
+
+async function getUsers() {
+  const { data, error } = await supabase
+    .from("users")
+    .select("id, username, email");
+
+  if (error) throw error;
+  return data;
+}
+
+async function getCategories() {
+  const { data, error } = await supabase
+    .from("categories")
+    .select("id, name");
+
+  if (error) throw error;
+  return data;
+}
+
+function Recipes({ refreshKey }) {
   const [recipes, setRecipes] = useState([]);
   const [users, setUsers] = useState([]);
   const [categories, setCategories] = useState([]);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState("");
 
   useEffect(() => {
-    fetch(API.recipes)
-      .then((response) => {
-        if (!response.ok) throw new Error("Could not load recipes.");
-        return response.json();
-      })
-      .then((data) => setRecipes(data))
-      .catch((error) => alert(error.message));
-  }, []);
+    let active = true;
 
-  useEffect(() => {
-    fetch(API.users)
-      .then((response) => {
-        if (!response.ok) throw new Error("Could not load authors.");
-        return response.json();
-      })
-      .then((data) => setUsers(data))
-      .catch((error) => alert(error.message));
+    async function loadData() {
+      setLoading(true);
+      setError("");
 
-    fetch(API.categories)
-      .then((response) => {
-        if (!response.ok) throw new Error("Could not load categories.");
-        return response.json();
-      })
-      .then((data) => setCategories(data))
-      .catch((error) => alert(error.message));
-  }, []);
+      try {
+        const [recipeData, userData, categoryData] = await Promise.all([
+          getRecipes(),
+          getUsers(),
+          getCategories(),
+        ]);
+
+        if (!active) return;
+
+        setRecipes(recipeData);
+        setUsers(userData);
+        setCategories(categoryData);
+      } catch (error) {
+        if (active) setError(error.message);
+      } finally {
+        if (active) setLoading(false);
+      }
+    }
+
+    loadData();
+
+    return () => {
+      active = false;
+    };
+  }, [refreshKey]);
 
   return (
     <section className="recipes-section">
       <h2>Fresh from the kitchjoen</h2>
+
+      {loading && <p>Loading recipes...</p>}
+      {error && <p role="alert">{error}</p>}
+
+      {!loading && !error && recipes.length === 0 && (
+        <p>No recipes yet. Add the first one!</p>
+      )}
 
       <div className="recipe-grid">
         {recipes.map((recipe) => (
@@ -71,11 +104,14 @@ function Recipes() {
 
               <small>
                 Author:{" "}
-                {users.find((user) => user.id === recipe.author)?.username || "—"}
+                {users.find((user) => user.id === recipe.author)?.username ||
+                  "—"}
                 {" | "}
                 Category:{" "}
                 <span className="category-name">
-                  {categories.find((category) => category.id === recipe.category)?.name || "—"}
+                  {categories.find(
+                    (category) => category.id === recipe.category
+                  )?.name || "—"}
                 </span>
               </small>
             </article>
@@ -86,7 +122,7 @@ function Recipes() {
   );
 }
 
-function AddRecipe() {
+function AddRecipe({ refreshKey, onRecipeAdded }) {
   const [name, setName] = useState("");
   const [ingredients, setIngredients] = useState("");
   const [instructions, setInstructions] = useState("");
@@ -94,51 +130,80 @@ function AddRecipe() {
   const [category, setCategory] = useState("");
   const [users, setUsers] = useState([]);
   const [categories, setCategories] = useState([]);
+  const [submitting, setSubmitting] = useState(false);
+  const [error, setError] = useState("");
 
   useEffect(() => {
-    fetch(API.users)
-      .then((response) => {
-        if (!response.ok) throw new Error("Could not load authors.");
-        return response.json();
-      })
-      .then((data) => setUsers(data))
-      .catch((error) => alert(error.message));
+    let active = true;
 
-    fetch(API.categories)
-      .then((response) => {
-        if (!response.ok) throw new Error("Could not load categories.");
-        return response.json();
-      })
-      .then((data) => setCategories(data))
-      .catch((error) => alert(error.message));
-  }, []);
+    async function loadOptions() {
+      setError("");
 
+      try {
+        const [userData, categoryData] = await Promise.all([
+          getUsers(),
+          getCategories(),
+        ]);
 
-  // Defines the function called when the form is submitted.
+        if (!active) return;
+
+        setUsers(userData);
+        setCategories(categoryData);
+      } catch (error) {
+        if (active) setError(error.message);
+      }
+    }
+
+    loadOptions();
+
+    return () => {
+      active = false;
+    };
+  }, [refreshKey]);
+
   async function handleSubmit(event) {
     event.preventDefault();
 
+    if (submitting) return;
+
+    if (
+      !name.trim() ||
+      !ingredients.trim() ||
+      !instructions.trim() ||
+      !author ||
+      !category
+    ) {
+      setError("Please complete all fields.");
+      return;
+    }
+
+    // Preserve the original ID type from the database.
+    const selectedAuthor = users.find(
+      (user) => String(user.id) === author
+    );
+
+    const selectedCategory = categories.find(
+      (item) => String(item.id) === category
+    );
+
+    if (!selectedAuthor || !selectedCategory) {
+      setError("Please select a valid author and category.");
+      return;
+    }
+
+    setSubmitting(true);
+    setError("");
+
     try {
-      const response = await fetch(API.createRecipe, {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify({
-          name,
-          ingredients,
-          instructions,
-          author: Number(author),
-          category: Number(category),
-        }),
+      const { error } = await supabase.from("recipe").insert({
+        name: name.trim(),
+        ingredients: ingredients.trim(),
+        instructions: instructions.trim(),
+        author: selectedAuthor.id,
+        category: selectedCategory.id,
       });
 
-      const data = await response.json();
-
-      if (!response.ok) {
-        alert(data.message || "Could not add recipe.");
-        return;
-      }
+      if (error) throw error;
 
       setName("");
       setIngredients("");
@@ -146,10 +211,12 @@ function AddRecipe() {
       setAuthor("");
       setCategory("");
 
+      onRecipeAdded();
       alert("Recipe added!");
-      window.location.reload();
-    } catch {
-      alert("Cannot connect to the server. Please try again.");
+    } catch (error) {
+      setError(error.message);
+    } finally {
+      setSubmitting(false);
     }
   }
 
@@ -157,28 +224,38 @@ function AddRecipe() {
     <section>
       <h2>Add Recipe</h2>
 
+      {error && <p role="alert">{error}</p>}
+
       <form onSubmit={handleSubmit}>
         <input
+          aria-label="Recipe name"
           placeholder="Recipe name"
           value={name}
           onChange={(event) => setName(event.target.value)}
+          required
         />
 
         <textarea
+          aria-label="Ingredients"
           placeholder="Ingredients"
           value={ingredients}
           onChange={(event) => setIngredients(event.target.value)}
+          required
         />
 
         <textarea
+          aria-label="Instructions"
           placeholder="Instructions"
           value={instructions}
           onChange={(event) => setInstructions(event.target.value)}
+          required
         />
 
         <select
+          aria-label="Author"
           value={author}
           onChange={(event) => setAuthor(event.target.value)}
+          required
         >
           <option value="">Select author</option>
 
@@ -190,8 +267,10 @@ function AddRecipe() {
         </select>
 
         <select
+          aria-label="Category"
           value={category}
           onChange={(event) => setCategory(event.target.value)}
+          required
         >
           <option value="">Select category</option>
 
@@ -202,25 +281,45 @@ function AddRecipe() {
           ))}
         </select>
 
-        <button type="submit">Add Recipe</button>
+        <button type="submit" disabled={submitting}>
+          {submitting ? "Adding..." : "Add Recipe"}
+        </button>
       </form>
     </section>
   );
 }
 
-
-function Users() {
+function Users({ refreshKey }) {
   const [users, setUsers] = useState([]);
+  const [error, setError] = useState("");
 
   useEffect(() => {
-    fetch(API.users)
-      .then((response) => response.json())
-      .then((data) => setUsers(data));
-  }, []);
+    let active = true;
+
+    async function loadUsers() {
+      setError("");
+
+      try {
+        const data = await getUsers();
+
+        if (active) setUsers(data);
+      } catch (error) {
+        if (active) setError(error.message);
+      }
+    }
+
+    loadUsers();
+
+    return () => {
+      active = false;
+    };
+  }, [refreshKey]);
 
   return (
     <section>
       <h2>Users</h2>
+
+      {error && <p role="alert">{error}</p>}
 
       {users.map((user) => (
         <p key={user.id}>
@@ -231,36 +330,42 @@ function Users() {
   );
 }
 
-function AddUser() {
+function AddUser({ onUserAdded }) {
   const [name, setName] = useState("");
   const [email, setEmail] = useState("");
+  const [submitting, setSubmitting] = useState(false);
+  const [error, setError] = useState("");
 
   async function handleSubmit(event) {
     event.preventDefault();
 
+    if (submitting) return;
+
+    if (!name.trim() || !email.trim()) {
+      setError("Please enter a name and email.");
+      return;
+    }
+
+    setSubmitting(true);
+    setError("");
+
     try {
-      const response = await fetch(API.createUser, {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify({
-          username: name,
-          email,
-        }),
+      const { error } = await supabase.from("users").insert({
+        username: name.trim(),
+        email: email.trim(),
       });
 
-      const data = await response.json();
+      if (error) throw error;
 
-      if (!response.ok) {
-        alert(data.message || "Could not add user.");
-        return;
-      }
+      setName("");
+      setEmail("");
 
+      onUserAdded();
       alert("User added!");
-      window.location.reload();
-    } catch {
-      alert("Cannot connect to the server. Please try again.");
+    } catch (error) {
+      setError(error.message);
+    } finally {
+      setSubmitting(false);
     }
   }
 
@@ -268,20 +373,29 @@ function AddUser() {
     <section>
       <h2>Add User</h2>
 
+      {error && <p role="alert">{error}</p>}
+
       <form onSubmit={handleSubmit}>
         <input
+          aria-label="Name"
           placeholder="Name"
           value={name}
           onChange={(event) => setName(event.target.value)}
+          required
         />
 
         <input
+          type="email"
+          aria-label="Email"
           placeholder="Email"
           value={email}
           onChange={(event) => setEmail(event.target.value)}
+          required
         />
 
-        <button type="submit">Add User</button>
+        <button type="submit" disabled={submitting}>
+          {submitting ? "Adding..." : "Add User"}
+        </button>
       </form>
     </section>
   );
@@ -289,20 +403,33 @@ function AddUser() {
 
 function Categories() {
   const [categories, setCategories] = useState([]);
+  const [error, setError] = useState("");
 
   useEffect(() => {
-    fetch(API.categories)
-      .then((response) => {
-        if (!response.ok) throw new Error("Could not load categories.");
-        return response.json();
-      })
-      .then((data) => setCategories(data))
-      .catch((error) => alert(error.message));
+    let active = true;
+
+    async function loadCategories() {
+      try {
+        const data = await getCategories();
+
+        if (active) setCategories(data);
+      } catch (error) {
+        if (active) setError(error.message);
+      }
+    }
+
+    loadCategories();
+
+    return () => {
+      active = false;
+    };
   }, []);
 
   return (
     <section>
       <h2>Categories</h2>
+
+      {error && <p role="alert">{error}</p>}
 
       {categories.map((category) => (
         <p key={category.id}>{category.name}</p>
@@ -312,6 +439,12 @@ function Categories() {
 }
 
 function App() {
+  const [refreshKey, setRefreshKey] = useState(0);
+
+  function refreshData() {
+    setRefreshKey((current) => current + 1);
+  }
+
   return (
     <main className="kitchen-app">
       <nav className="topbar">
@@ -334,9 +467,7 @@ function App() {
             <span>Joe-ngan merajoe-k, makan joer!</span>
           </h1>
 
-          <p>
-            Recipes that make Joe-mama cry
-          </p>
+          <p>Recipes that make Joe-mama cry</p>
 
           <a href="#recipes" className="hero-button">
             Explore recipes ↗
@@ -347,21 +478,26 @@ function App() {
           <div className="orbit-core">
             <img src="/favicon.png" alt="Joe-m Masak logo" />
           </div>
-          <span className="orbit-caption">A JOENIVERSE OF FLAVOUR</span>
+          <span className="orbit-caption">
+            A JOENIVERSE OF FLAVOUR
+          </span>
         </div>
       </header>
 
       <div id="recipes">
-        <Recipes />
+        <Recipes refreshKey={refreshKey} />
       </div>
 
       <div id="add-recipe">
-        <AddRecipe />
+        <AddRecipe
+          refreshKey={refreshKey}
+          onRecipeAdded={refreshData}
+        />
       </div>
 
       <div className="community-grid">
-        <Users />
-        <AddUser />
+        <Users refreshKey={refreshKey} />
+        <AddUser onUserAdded={refreshData} />
       </div>
 
       <Categories />
